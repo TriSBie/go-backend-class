@@ -18,4 +18,8 @@ sqlc:
 test:
 	go test -v -cover ./...
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc test
+server:
+	go run main.go
+
+# By using .phony, we can run the command without specifying the target
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc test server
