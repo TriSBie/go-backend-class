@@ -21,5 +21,7 @@ test:
 server:
 	go run main.go
 
+mock:
+	mockgen -destination=db/mock/store.go simple_bank.sqlc.dev/app/db/sqlc Store
 # By using .phony, we can run the command without specifying the target
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc test server
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc test server mock

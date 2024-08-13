@@ -7,15 +7,20 @@ import (
 	"log"
 )
 
+type Store interface {
+	Querier
+	TransferTxDeadLock(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
 // Store provides all functions to execute db queries and transactions
-// By using embedded Queries inside Store struct, all methods or functions will be override when using with Store
-type Store struct {
+// By using embedded Queries inside Store struct, all methods or functions will be inherited when using with Store
+type StoreDB struct {
 	*Queries // inheritance
 	db       *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &StoreDB{
 		db:      db,
 		Queries: New(db),
 	}
@@ -23,7 +28,7 @@ func NewStore(db *sql.DB) *Store {
 
 // execTX executes a function within a database transaction and return an error if occur
 // define second parameters as callback function which accepts references Queries and return error
-func (store *Store) execTX(ctx context.Context, fn func(*Queries) error) error {
+func (store *StoreDB) execTX(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("Error occurred: %v", err)
@@ -66,7 +71,7 @@ type TransferTxResult struct {
 
 // TransferTx performs a money transfer from one account to another
 // It creates a record, add account entries, and update account's balance with a single database transaction
-func (store *Store) TransferTxDeadLock(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *StoreDB) TransferTxDeadLock(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTX(ctx, func(q *Queries) error {

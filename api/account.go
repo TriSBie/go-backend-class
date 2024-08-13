@@ -44,6 +44,8 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	// account := db.Account{}
+
 	ctx.JSON(http.StatusCreated, account)
 
 }
@@ -61,6 +63,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
 		}
 	}
 

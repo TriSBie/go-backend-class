@@ -6,11 +6,11 @@ import (
 )
 
 type Server struct {
-	store  *db.Store   // self-contained state management
+	store  db.Store    // self-contained state management
 	router *gin.Engine // router from gin
 }
 
-func NewServer(store *db.Store) *Server {
+func NewServer(store db.Store) *Server {
 	server := &Server{
 		store: store,
 	}

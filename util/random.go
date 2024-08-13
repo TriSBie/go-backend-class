@@ -20,8 +20,9 @@ func RandomInt(min, max int64) int64 {
 }
 
 func RandomString(n int) string {
+	// using strings.Builder for
+	// + minimize the memory copying
 	var sb strings.Builder
-
 	k := len(alphabet)
 	for i := 0; i < n; i++ {
 		c := alphabet[rand.Intn(k)]
