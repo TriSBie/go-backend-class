@@ -2,21 +2,22 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	db "simple_bank.sqlc.dev/app/db/sqlc"
 )
 
 type CreateAccountRequest struct {
 	Owner    string `json:"owner" binding:"required"`
-	Currency string `json:"currency" binding:"required,oneof= USD EUR"`
+	Currency string `json:"currency" binding:"required,currency"`
 }
 
 type GetAccountRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
-
 type ListAccounts struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"` // specify the range of pageSize allowed to display
@@ -40,12 +41,16 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	account, err := server.store.CreateAccounts(ctx, args)
 
 	if err != nil {
+		if pgError, ok := err.(*pq.Error); ok {
+			fmt.Println("pq error:", pgError.Code.Name())
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	// account := db.Account{}
 
+	// return response code to the server
 	ctx.JSON(http.StatusCreated, account)
 
 }
@@ -65,6 +70,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusFound, account)

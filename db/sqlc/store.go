@@ -156,8 +156,6 @@ func (store *StoreDB) TransferTxDeadLock(ctx context.Context, arg TransferTxPara
 		return nil
 	})
 
-	fmt.Printf("tx Error: %v\n", err)
-
 	return result, err
 }
 
