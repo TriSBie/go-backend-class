@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -39,16 +38,12 @@ func TestGetAccountAPI(t *testing.T) {
 	recorder := httptest.NewRecorder()
 
 	url := fmt.Sprintf("/accounts/%d", account.ID)
-	log.Println("url : ", url)
+
 	// define new request include method and url to request
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	log.Println("err", err)
 	require.NoError(t, err)
 	server.router.ServeHTTP(recorder, req)
 
-	log.Println("Res body", recorder.Body)
-	log.Printf("Res body type %T\n", recorder.Body)
-	// check response
 	// require.Equal(t, http.StatusOK, recorder.Code)
 	requireBodyMatchAccount(t, recorder.Body, account)
 }

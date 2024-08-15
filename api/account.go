@@ -2,7 +2,6 @@ package api
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +41,11 @@ func (server *Server) createAccount(ctx *gin.Context) {
 
 	if err != nil {
 		if pgError, ok := err.(*pq.Error); ok {
-			fmt.Println("pq error:", pgError.Code.Name())
+			switch pgError.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

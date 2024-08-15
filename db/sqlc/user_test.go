@@ -11,9 +11,12 @@ import (
 
 func createRandomUser(t *testing.T) User {
 	ctx := context.Background()
+
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+
 	arg := CreateUserParams{
 		Username:       util.RandomOwner(),
-		HashedPassword: "secret",
+		HashedPassword: hashedPassword,
 		FullName:       util.RandomOwner(),
 		Email:          util.RandomEmail(),
 	}
@@ -29,6 +32,7 @@ func createRandomUser(t *testing.T) User {
 	require.Equal(t, user.FullName, arg.FullName)
 	require.Equal(t, user.HashedPassword, arg.HashedPassword)
 	require.Equal(t, user.Email, arg.Email)
+
 	require.NotZero(t, user.Username)
 	require.NotZero(t, user.CreatedAt)
 
