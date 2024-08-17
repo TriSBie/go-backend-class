@@ -71,5 +71,28 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 	// result := db.Result{}
 
 	ctx.JSON(http.StatusCreated, result)
+}
 
+type GetTransferByIdParams struct {
+	ID int64 `uri:"id"`
+}
+
+func (server *Server) getTransferById(ctx *gin.Context) {
+	var req GetTransferByIdParams
+
+	// if err is only single
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	account, err := server.store.GetTransferById(ctx, req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	ctx.JSON(http.StatusOK, account)
 }

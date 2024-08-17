@@ -76,7 +76,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	ctx.JSON(http.StatusFound, account)
+	ctx.JSON(http.StatusOK, account)
 }
 
 func (server *Server) listAccounts(ctx *gin.Context) {
