@@ -24,7 +24,10 @@ func main() {
 
 	// initial store by using db.New
 	store := db.NewStore(conn)
-	server := api.NewServer(store)
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal("Cannot make new server", err)
+	}
 
 	// cannot declare variable twice if had been using :=
 	err = server.Start(config.ServerAddress)

@@ -33,7 +33,7 @@ func TestGetAccountAPI(t *testing.T) {
 	store.EXPECT().GetAccountById(gomock.Any(), gomock.Eq(account.ID)).Times(1).Return(account, nil)
 
 	// test server and send request
-	server := NewServer(store)
+	server := newTestServer(t, store)
 	// recorder will record the response result from serveHTTP
 	recorder := httptest.NewRecorder()
 
@@ -116,7 +116,8 @@ func TestGetAccountAPI_Refactoring(t *testing.T) {
 			tc.buildStubs(store)
 
 			// test server and send request
-			server := NewServer(store)
+			server := newTestServer(t, store)
+
 			// recorder will record the response result from serveHTTP
 			recorder := httptest.NewRecorder()
 
