@@ -2,20 +2,22 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	db "simple_bank.sqlc.dev/app/db/sqlc"
+	"simple_bank.sqlc.dev/app/token"
 )
 
 type CreateAccountRequest struct {
-	Owner    string `json:"owner" binding:"required"`
+	// Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
 type GetAccountRequest struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
+	ID int64 `uri:"id" binding:"required"`
 }
 type ListAccounts struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
@@ -30,9 +32,12 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	// insert new account to database
 	args := db.CreateAccountsParams{
-		Owner:    req.Owner,
+		// since payload as set in the request header
+		Owner:    authPayload.Username,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -74,6 +79,16 @@ func (server *Server) getAccount(ctx *gin.Context) {
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// get authenticated account compare with on-demand account query
+	authenticated := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if authenticated.Username != account.Owner {
+		// create a custom err
+		err := errors.New("Account doesn't belong to the authenticated token")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
 	}
 
 	ctx.JSON(http.StatusOK, account)
@@ -81,12 +96,18 @@ func (server *Server) getAccount(ctx *gin.Context) {
 
 func (server *Server) listAccounts(ctx *gin.Context) {
 	var req ListAccounts
+
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
+	// extract payload from the request header
+
+	payload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	arg := db.GetAccountsParams{
+		Owner:  payload.Username,
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}

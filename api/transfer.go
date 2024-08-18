@@ -2,11 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	db "simple_bank.sqlc.dev/app/db/sqlc"
+	"simple_bank.sqlc.dev/app/token"
 )
 
 type CreateTransferRequest struct {
@@ -16,25 +18,25 @@ type CreateTransferRequest struct {
 	Currency      string `json:"currency" binding:"required,currency"`
 }
 
-func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) bool {
+func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {
 	account, err := server.store.GetAccountById(ctx, accountID)
 	if err != nil {
 		// if no row return
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return account, false
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return false
+		return account, false
 	}
 
 	if account.Currency != currency {
-		err := fmt.Errorf("account [%d] currenncy mismatch %s vs %s ", accountID, currency, account.Currency)
+		err := fmt.Errorf("account [%d] currency mismatch %s vs %s ", accountID, currency, account.Currency)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return account, false
 	}
 
-	return true
+	return account, true
 }
 
 func (server *Server) createTransfer(ctx *gin.Context) {
@@ -45,18 +47,30 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
+	payload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	// validate the currency type of each account
-	if !server.validAccount(ctx, req.FromAccountID, req.Currency) {
+
+	fromAccount, valid := server.validAccount(ctx, req.FromAccountID, req.Currency)
+
+	if !valid {
 		return
 	}
 
-	if !server.validAccount(ctx, req.ToAccountID, req.Currency) {
+	if fromAccount.Owner != payload.Username {
+		err := errors.New("account owner doesn't belong to the authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+	_, valid = server.validAccount(ctx, req.ToAccountID, req.Currency)
+
+	if !valid {
 		return
 	}
 
 	// insert new account to database
 	args := db.CreateTransferParams{
-		FromAccountID: req.FromAccountID,
+		FromAccountID: fromAccount.ID,
 		ToAccountID:   req.ToAccountID,
 		Amount:        req.Amount,
 	}

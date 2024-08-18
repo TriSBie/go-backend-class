@@ -9,12 +9,14 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	mockdb "simple_bank.sqlc.dev/app/db/mock"
 	db "simple_bank.sqlc.dev/app/db/sqlc"
+	"simple_bank.sqlc.dev/app/token"
 	"simple_bank.sqlc.dev/app/util"
 )
 
@@ -59,7 +61,8 @@ func TestCreateUserAPi(t *testing.T) {
 
 	test_cases := []struct {
 		name          string
-		body          gin.H //shorthand for map[string]any
+		body          gin.H //shorthand for map[string]any,
+		setUpAuth     func(t *testing.T, request *http.Request, tkMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -70,6 +73,9 @@ func TestCreateUserAPi(t *testing.T) {
 				"password":  password,
 				"full_name": user.FullName,
 				"email":     user.Email,
+			},
+			setUpAuth: func(t *testing.T, request *http.Request, tkMaker token.Maker) {
+				addAuthorization(t, request, tkMaker, authorizationTypeBearer, user.Username, time.Minute)
 			},
 			// mockStore is generated from structure Queries methods
 			buildStubs: func(store *mockdb.MockStore) {
@@ -126,6 +132,7 @@ func TestCreateUserAPi(t *testing.T) {
 			req, err := http.NewRequest(http.MethodPost, urlPath, bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.setUpAuth(t, req, server.tokenMaker)
 			// passing recorder var to record results response from the serveHTTP making
 			// [*] Invoke a handler of method to being test with stubs has already declared above
 			server.router.ServeHTTP(recorder, req)
@@ -166,5 +173,8 @@ func requireBodyMatcherUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	err = json.Unmarshal(data, &userArg)
 	require.NoError(t, err)
 
-	require.Equal(t, user, userArg)
+	userArgRes := newUserResponse(userArg)
+	userExpectedRes := newUserResponse(user)
+
+	require.Equal(t, userArgRes, userExpectedRes)
 }
