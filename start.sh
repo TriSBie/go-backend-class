@@ -3,7 +3,18 @@
 set -e
 echo "run db migration"
 
-source /app/app.env
+if [ ! -f /app/app.env ]; then
+  echo "app.env not found!"
+  exit 1
+fi
+
+set -a
+. /app/app.env
+set +a
+
+# Debugging: Print the DB_SOURCE to ensure it is loaded
+echo "DB_SOURCE is $DB_SOURCE"
+
 
 /app/migrate -path /app/migration -database "$DB_SOURCE" -verbose up
 
