@@ -1,6 +1,5 @@
 #!/bin/sh
 
-set -e
 echo "run db migration"
 
 if [ ! -f /app/app.env ]; then
