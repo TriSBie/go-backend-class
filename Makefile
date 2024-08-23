@@ -8,13 +8,13 @@ dropdb:
 	docker exec -it postgres_16 dropdb simple_bank
 
 migrateup: 
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://root:38hiu13uLDoiBEU1viLA@simple-bank.c5gk8ss667vp.ap-southeast-2.rds.amazonaws.com:5432/simple_bank" -verbose up
 
 migrateup1: 
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://root:38hiu13uLDoiBEU1viLA@simple-bank.c5gk8ss667vp.ap-southeast-2.rds.amazonaws.com:5432/simple_bank" -verbose down
 
 migratedown1:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
@@ -31,4 +31,4 @@ server:
 mock:
 	mockgen -destination=db/mock/store.go simple_bank.sqlc.dev/app/db/sqlc Store
 # By using .phony, we can run the command without specifying the target
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock migrateupAWS migratedownAWS
