@@ -12,6 +12,7 @@ set -a
 set +a
 
 grep -v '^#' app.env | grep -v '^$'
+env | grep DB_SOURCE
 
 # Debugging: Print the DB_SOURCE to ensure it is loaded
 echo "DB_SOURCE is $DB_SOURCE"
