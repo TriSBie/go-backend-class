@@ -29,9 +29,9 @@ jobs:
       - name: Load secrets and save to .env
         run: aws secretsmanager get-secret-value --secret-id simple_bank_secret --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > app.env
 
-      - name: Debug: Check app.env content
+      - name: Check app.env content
         run: cat app.env
-        
+
       - name: Build, tag, and push docker image to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
