@@ -20,7 +20,7 @@ WORKDIR /app
 COPY --from=builder /app/main . 
 # copy the migrate binary file from the build stage to the run stage
 COPY --from=builder /app/migrate ./migrate
-COPY app.env .
+COPY app.env /app/app.env
 COPY start.sh .
 COPY wait-for.sh .
 
@@ -28,6 +28,7 @@ COPY db/migration ./migration
 
 RUN chmod +x /app/start.sh
 RUN chmod +x /app/wait-for.sh
+RUN chmod 644 /app/app.env
 
 EXPOSE 8080
 
